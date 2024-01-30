@@ -1,0 +1,26 @@
+[
+    {
+      "description": "Full visitor ID",
+      "mode": "NULLABLE",
+      "name": "fullVisitorId",
+      "type": "STRING"
+    },
+    {
+      "description": "Visit number",
+      "mode": "NULLABLE",
+      "name": "visitNumber",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Visit Start Time",
+      "mode": "NULLABLE",
+      "name": "visitStartTime",
+      "type": "INTEGER"
+    },
+    {
+      "description": "Full Date of Visit",
+      "mode": "NULLABLE",
+      "name": "sa",
+      "type": "DATE"
+    }
+]  
