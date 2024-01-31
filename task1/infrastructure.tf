@@ -1,34 +1,32 @@
 
 # A. Creating VPC and Subnet in US-central-1
-
 resource "google_compute_network" "vpc_network" {
-  name = "q-terraform-network-vaibhav"
+  name                    = var.vpc_network_name
   auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "subnet_us_central1" {
-  name          = "q-terraform-subnetwork-vaibhav"
-  ip_cidr_range = "10.0.0.0/16"
-  region        = "us-central1"
+  name          = var.subnet_name
+  ip_cidr_range = var.ip_cidr_range
+  region        = var.region
   network       = google_compute_network.vpc_network.self_link
 }
 
-# B. Creating Firewall rules to allow IAP and Internal Comminications in the subnet
-
+# B. Creating Firewall rules to allow IAP and Internal Communications in the subnet
 resource "google_compute_firewall" "allow_iap_firewall_rule" {
-  name    = "q-allow-iap-firewall-rule-vaibhav"
+  name    = var.compute_allow_iap_firewall_name
   network = google_compute_network.vpc_network.name
 
   allow {
     protocol = "tcp"
-    ports    = ["22"]
+    ports    = var.allow_iap_ports
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = var.source_ranges_iap
 }
 
 resource "google_compute_firewall" "internal_communication" {
-  name    = "q-internal-communication-vaibhav"
+  name    = var.compute_allow_internal_communication
   network = google_compute_network.vpc_network.self_link
 
   allow {
@@ -45,7 +43,7 @@ resource "google_compute_firewall" "internal_communication" {
     ports    = ["0-65535"]
   }
 
-  source_ranges = ["10.0.0.0/16"]
+  source_ranges = var.source_ranges_internal_comm
 }
 
 resource "google_compute_firewall" "health_check_firewall_rule" {
@@ -54,23 +52,22 @@ resource "google_compute_firewall" "health_check_firewall_rule" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80"]
+    ports    = var.health_check_ports
   }
 
   source_ranges = ["0.0.0.0/0"]
 }
 
-# C. Creating a Compute Engine VM and 
+# C. Creating a Compute Engine VM and
 # D. Install nginx on the VM using start-up scripts
-
 resource "google_compute_instance" "q-terraform-vm" {
   name         = "q-terraform-instance-vaibhav"
-  machine_type = "n1-standard-1"
-  zone         = "us-central1-a"
+  machine_type = var.machine_type
+  zone         = var.zone
 
   boot_disk {
     initialize_params {
-      image = "debian-cloud/debian-11"
+      image = var.image
     }
   }
 
@@ -79,11 +76,11 @@ resource "google_compute_instance" "q-terraform-vm" {
     subnetwork = google_compute_subnetwork.subnet_us_central1.name
 
     access_config {
-      // No external IP address4
+      // No external IP address
     }
   }
 
-  metadata_startup_script = "sudo apt-get update; sudo apt-get install -y nginx"
+  metadata_startup_script = var.metadata_startup_script
 
   service_account {
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
@@ -93,8 +90,6 @@ resource "google_compute_instance" "q-terraform-vm" {
 }
 
 # E. Create an unmanaged MIG with the above VM
-
-
 resource "google_compute_instance_group" "q_umig" {
   name        = "q-umig"
   description = "Terraform Unmanagend Instance Group"
@@ -103,10 +98,7 @@ resource "google_compute_instance_group" "q_umig" {
   instances = [google_compute_instance.q-terraform-vm.self_link]
 }
 
-
-# F. Create a HTTP load balancer and attach the UMIG as backend.
-
-
+# F. Create an HTTP load balancer and attach the UMIG as backend.
 resource "google_compute_http_health_check" "q_health_check" {
   name               = "q-health-check"
   port               = 80
@@ -124,22 +116,3 @@ resource "google_compute_backend_service" "q_backend_service" {
     group = google_compute_instance_group.q_umig.self_link
   }
 }
-
-# resource "google_compute_url_map" "q_url_map" {
-#   name            = "q-url-map"
-#   default_route_action {
-#     backend_service = google_compute_backend_service.q_backend_service.self_link
-#   }
-# }
-
-# resource "google_compute_target_http_proxy" "my_target_http_proxy" {
-#   name    = "my-target-http-proxy"
-#   url_map = google_compute_url_map.my_url_map.self_link
-# }
-
-# resource "google_compute_global_forwarding_rule" "my_forwarding_rule" {
-#   name       = "my-forwarding-rule"
-#   target     = google_compute_target_http_proxy.my_target_http_proxy.self_link
-#   port_range = "80"
-# }
-

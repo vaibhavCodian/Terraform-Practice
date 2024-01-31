@@ -1,50 +1,52 @@
 resource "google_sql_database_instance" "default" {
-  name             = "q-terraform-vaibhav-sql-instance"
-  region           = "us-central1"
-  database_version = "POSTGRES_14"
-  deletion_protection = false
+  name                = var.sql_database_instance_name
+  region              = var.region
+  database_version    = var.database_version
+  deletion_protection = var.database_deletion_protection
 
   settings {
-    tier = "db-f1-micro"
+    tier = var.database_tier
 
     ip_configuration {
-      ipv4_enabled    = false
+      ipv4_enabled    = var.ip_configuration_ipv4_enabled
       private_network = google_service_networking_connection.private_vpc_connection.network
     }
 
-    database_flags {
-      name  = "log_disconnections"
-      value = "on"
-    } # <-- logs the end of each session, including the session duration.
 
-    database_flags { 
-      name  = "log_statement"
-      value = "ddl"
-    } # <-- Controls which SQL statements are logged. 
-
-    database_flags {
-      name  = "log_temp_files"
-      value = "0"
-    } # <-- flag logs the use of temprory files by pg
-
+    dynamic "database_flags" {
+      # for_each = {
+      #   log_disconnections = var.database_flags_log_disconnection,
+      #   log_statement      = var.database_flags_log_statement,
+      #   log_temp_files     = var.database_log_temp_files,
+      # }
+      for_each = var.database_flags
+      
+      content {
+        name  = database_flags.key
+        value = database_flags.value
+      }
+    }
   }
 }
 
 resource "google_compute_network" "sql-default" {
-  name                    = "sql-default"
-  auto_create_subnetworks = false
+  name                    = var.database_network_name
+  auto_create_subnetworks = var.database_network_auto_create
 }
 
 resource "google_service_networking_connection" "private_vpc_connection" {
-  network                 = google_compute_network.sql-default.self_link
-  service                 = "servicenetworking.googleapis.com"
+  network = google_compute_network.sql-default.self_link
+
+  service = var.database_network_connection_service
+
   reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
 }
 
 resource "google_compute_global_address" "private_ip_address" {
-  name          = "private-ip-address"
-  purpose       = "VPC_PEERING"
-  address_type  = "INTERNAL"
-  prefix_length = 16
-  network       = google_compute_network.sql-default.self_link
+  name          = var.database_compute_global_address_name
+  purpose       = var.database_compute_global_address_purpose
+  address_type  = var.database_compute_global_address_type
+  prefix_length = var.database_compute_global_address_prefix_length
+
+  network = google_compute_network.sql-default.self_link
 }
