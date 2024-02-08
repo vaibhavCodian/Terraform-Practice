@@ -116,7 +116,8 @@ resource "google_compute_backend_service" "q_backend_service" {
 }
 
 
-resource "google_compute_url_map" "q_url_map" {
+
+resource "google_compute_url_map" "q_url_map" { 
   name            = var.url_map_name
   default_route_action {
     backend_service = google_compute_backend_service.q_backend_service.self_link
@@ -128,7 +129,7 @@ resource "google_compute_target_http_proxy" "q_target_http_proxy" {
   url_map   = google_compute_url_map.q_url_map.self_link
 }
 
-resource "google_compute_global_forwarding_rule" "q_forwarding_rule" {
+resource "google_compute_global_forwarding_rule" "q_forwarding_rule" { # 
   name       = var.forwarding_rule_name
   target     = google_compute_target_http_proxy.q_target_http_proxy.self_link
   port_range = var.forwarding_rule_port_range

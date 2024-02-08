@@ -67,11 +67,11 @@ variable "ip_configuration_ipv4_enabled" {
 
 variable "database_flags" {
   type = map(string)
-  default = {
-    log_disconnections = "on",
-    log_statement      = "ddl",
-    log_temp_files     = "0",
-  }
+  # default = {
+  #   log_disconnections = "on",
+  #   log_statement      = "ddl",
+  #   log_temp_files     = "0",
+  # }
 }
 # database network varialbles
 
