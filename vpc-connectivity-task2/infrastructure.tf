@@ -130,17 +130,6 @@ resource "google_compute_ha_vpn_gateway" "gateway2" {
 }
 
 
-# external IP addresses for VPN
-# below block is used to reserves a new address, and then you tell the VPN gateway to use that address.
-
-resource "google_compute_address" "address1" {
-  name = "vpn-address1"
-}
-
-resource "google_compute_address" "address2" {
-  name = "vpn-address2"
-}
-
 # Sleep 60s to wait for the creation of VPN Gateway....
 
 resource "time_sleep" "wait_60_seconds" {
