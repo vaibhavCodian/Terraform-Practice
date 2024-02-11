@@ -10,7 +10,7 @@
 terraform {
   backend "gcs" {
     bucket = "q-inframod-pe-training-tf-state-bkt-2"
-    prefix = "state/vpc-connectivity-task2"
+    prefix = "state/vpc-service-task"
     # impersonate_service_account = "terraform-gservice@terraform-practice-412313.iam.gserviceaccount.com"
   }
 }

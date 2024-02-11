@@ -60,6 +60,8 @@ resource "google_compute_instance" "vm2" {
   network_interface {
     network    = google_compute_network.vpc2.self_link
     subnetwork = google_compute_subnetwork.subnet2.self_link
+
+    
   }
 }
 
