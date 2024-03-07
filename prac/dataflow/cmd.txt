@@ -1,0 +1,75 @@
+main.tf
+________
+# Creates the service accounts; iterate over each element in the service_accounts variable.
+
+resource "google_service_account" "service_account" {
+  for_each = var.service_accounts
+  
+  account_id   = each.value.account_id
+  display_name = each.value.display_name
+  description  = each.value.description
+  project      = each.value.project
+}
+
+# locals block: defines a local value iam_members that is used to create a list of all the roles that need to be assigned to each service account.
+locals {
+  iam_members = flatten([
+    for sa, details in var.service_accounts : [
+      for role in details.project_roles : {
+        key     = "${sa}.${role}"
+        project = details.project
+        role    = role
+        member  = "serviceAccount:${google_service_account.service_account[sa].email}"
+      }
+    ]
+  ])
+}
+
+resource "google_project_iam_member" "project_iam_member" {
+  for_each = { for iam in local.iam_members : iam.key => iam }
+
+  project = each.value.project
+  role    = each.value.role
+  member  = each.value.member
+}
+
+
+variable.tf
+________
+
+variable "service_accounts" {
+  type = map(object({
+    account_id    = string
+    display_name  = string
+    description   = string
+    project       = string
+    project_roles = list(string)
+  }))
+}
+
+variables.tfvars
+___
+
+service_accounts = {
+  service_account_1 = {
+    account_id   = "vaibhav-sa"
+    display_name = "Service Account for Vaibhav"
+    description  = "Description for Service Account for Vaibhav"
+    project      = "terraform-practice-412313"
+    project_roles        = ["roles/storage.objectAdmin"]
+  }
+  service_account_2 = {
+    account_id   = "satyam-sa"
+    display_name = "Service Account for Satyam"
+    description  = "Description for Service Account for Satyam"
+    project      = "terraform-practice-412313"
+    project_roles        = ["roles/storage.objectViewer"]
+  }
+}
+
+
+Above is the Code to setup terraform code to create multiple service_account considering all possible values
+I want to create a similar Terraform Code to setup dataflow using Terraform in GCP
+refering to https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dataflow_job
+
+Please provide complete code for main.tf, variables.tf and variables.tfvars
